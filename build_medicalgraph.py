@@ -159,6 +159,7 @@ class MedicalGraph:
     def create_node(self, label, nodes):
         count = 0
         for node_name in nodes:
+            #Node是一个类，用于创建一个新的节点。Node的第一个参数是节点的标签（类型），第二个参数是节点的名称。
             node = Node(label, name=node_name)
             self.g.create(node)
             count += 1
@@ -169,6 +170,10 @@ class MedicalGraph:
     def create_diseases_nodes(self, disease_infos):
         count = 0
         for disease_dict in disease_infos:
+            """
+            创建一个新的节点，节点的类型为"Disease"，并设置节点的属性，包括疾病的名称、描述、预防方法、原因、易感人群、治疗周期、治疗科室、治疗方法和治愈概率。
+            在图数据库中创建这个节点。
+            """
             node = Node("Disease", name=disease_dict['name'], desc=disease_dict['desc'],
                         prevent=disease_dict['prevent'] ,cause=disease_dict['cause'],
                         easy_get=disease_dict['easy_get'],cure_lasttime=disease_dict['cure_lasttime'],
@@ -212,18 +217,24 @@ class MedicalGraph:
         self.create_relationship('Disease', 'Disease', rels_acompany, 'acompany_with', '并发症')
         self.create_relationship('Disease', 'Department', rels_category, 'belongs_to', '所属科室')
 
-    '''创建实体关联边'''
+    '''创建实体关联边
+    start_node和end_node：分别表示关系的起始节点和结束节点的类型。
+    edges：一个包含关系信息的列表，每个元素是一个包含两个节点名称的列表或元组。
+    rel_type：关系的类型。
+    rel_name：关系的名称。
+    '''
     def create_relationship(self, start_node, end_node, edges, rel_type, rel_name):
         count = 0
         # 去重处理
         set_edges = []
         for edge in edges:
-            set_edges.append('###'.join(edge))
+            set_edges.append('###'.join(edge)) #将edge中的所有元素连接成一个字符串，元素之间用'###'分隔
         all = len(set(set_edges))
         for edge in set(set_edges):
             edge = edge.split('###')
             p = edge[0]
             q = edge[1]
+            #构造一个Cypher查询语句query，这个语句将在图数据库中创建一个从类型为start_node，名称为p的节点，到类型为end_node，名称为q的节点的关系，关系的类型是rel_type，名称是rel_name
             query = "match(p:%s),(q:%s) where p.name='%s'and q.name='%s' create (p)-[rel:%s{name:'%s'}]->(q)" % (
                 start_node, end_node, p, q, rel_type, rel_name)
             try:

@@ -11,7 +11,15 @@ from lxml import etree
 import pymongo
 import re
 
-'''基于司法网的犯罪案件采集'''
+'''基于司法网的犯罪案件采集
+这段代码是在建立一个连接到MongoDB数据库的连接。
+
+1. `self.conn = pymongo.MongoClient()`：这行代码是创建一个MongoDB客户端，用于连接MongoDB服务器。
+
+2. `self.db = self.conn['medical']`：这行代码是选择名为'medical'的数据库。如果这个数据库不存在，MongoDB会自动创建。
+
+3. `self.col = self.db['data']`：这行代码是选择名为'data'的集合（在关系数据库中叫做表）。如果这个集合不存在，MongoDB会自动创建。
+'''
 class CrimeSpider:
     def __init__(self):
         self.conn = pymongo.MongoClient()

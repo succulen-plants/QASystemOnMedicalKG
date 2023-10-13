@@ -6,7 +6,10 @@
 
 class QuestionPaser:
 
-    '''构建实体节点'''
+    '''构建实体节点
+    如果输入的args是{'苹果': ['水果', '科技公司'], '香蕉': ['水果'], '谷歌': ['科技公司']}，
+    那么输出的entity_dict就会是{'水果': ['苹果', '香蕉'], '科技公司': ['苹果', '谷歌']}
+    '''
     def build_entitydict(self, args):
         entity_dict = {}
         for arg, types in args.items():
@@ -22,6 +25,7 @@ class QuestionPaser:
     def parser_main(self, res_classify):
         args = res_classify['args']
         entity_dict = self.build_entitydict(args)
+        # question_types 问题的特征值
         question_types = res_classify['question_types']
         sqls = []
         for question_type in question_types:
@@ -98,6 +102,7 @@ class QuestionPaser:
         sql = []
         # 查询疾病的原因
         if question_type == 'disease_cause':
+            #这行代码是在为每一个实体构建一个Cypher查询语句。这个查询语句的作用是在图数据库中查找名字为实体的疾病节点，并返回这个疾病的名字和原因
             sql = ["MATCH (m:Disease) where m.name = '{0}' return m.name, m.cause".format(i) for i in entities]
 
         # 查询疾病的防御措施

@@ -9,6 +9,7 @@ import ahocorasick
 
 class QuestionClassifier:
     def __init__(self):
+        #获取当前脚本文件的所在目录，并将这个目录的路径赋值给cur_dir
         cur_dir = '/'.join(os.path.abspath(__file__).split('/')[:-1])
         #　特征词路径
         self.disease_path = os.path.join(cur_dir, 'dict/disease.txt')
@@ -20,18 +21,19 @@ class QuestionClassifier:
         self.symptom_path = os.path.join(cur_dir, 'dict/symptom.txt')
         self.deny_path = os.path.join(cur_dir, 'dict/deny.txt')
         # 加载特征词
-        self.disease_wds= [i.strip() for i in open(self.disease_path) if i.strip()]
+        self.disease_wds= [i.strip() for i in open(self.disease_path) if i.strip()]# if i.strip()：检查i去除首尾空格后是否为空
         self.department_wds= [i.strip() for i in open(self.department_path) if i.strip()]
         self.check_wds= [i.strip() for i in open(self.check_path) if i.strip()]
         self.drug_wds= [i.strip() for i in open(self.drug_path) if i.strip()]
         self.food_wds= [i.strip() for i in open(self.food_path) if i.strip()]
         self.producer_wds= [i.strip() for i in open(self.producer_path) if i.strip()]
         self.symptom_wds= [i.strip() for i in open(self.symptom_path) if i.strip()]
+        # region_words, 生成一个无需的列表set
         self.region_words = set(self.department_wds + self.disease_wds + self.check_wds + self.drug_wds + self.food_wds + self.producer_wds + self.symptom_wds)
         self.deny_words = [i.strip() for i in open(self.deny_path) if i.strip()]
         # 构造领域actree
         self.region_tree = self.build_actree(list(self.region_words))
-        # 构建词典
+        # 构建词典，给每个词打上标签， 一对多
         self.wdtype_dict = self.build_wdtype_dict()
         # 问句疑问词
         self.symptom_qwds = ['症状', '表征', '现象', '症候', '表现']
@@ -72,6 +74,7 @@ class QuestionClassifier:
 
         question_types = []
 
+        #从问题中筛选出特征词
         # 症状
         if self.check_words(self.symptom_qwds, question) and ('disease' in types):
             question_type = 'disease_symptom'
@@ -187,7 +190,7 @@ class QuestionClassifier:
                 wd_dict[wd].append('producer')
         return wd_dict
 
-    '''构造actree，加速过滤'''
+    '''构造actree，加速过滤， 将所有领域信息构建成一个自动机（Automaton）'''
     def build_actree(self, wordlist):
         actree = ahocorasick.Automaton()
         for index, word in enumerate(wordlist):
@@ -195,18 +198,25 @@ class QuestionClassifier:
         actree.make_automaton()
         return actree
 
-    '''问句过滤'''
+    '''
+    问句过滤：
+    这段代码的功能是检查输入的问题中是否包含医疗相关的关键词，并返回这些关键词及其对应的类型
+    '''
     def check_medical(self, question):
         region_wds = []
+        # AC自动机）进行字符串匹配， 将所有匹配到的关键词存储
         for i in self.region_tree.iter(question):
-            wd = i[1][1]
-            region_wds.append(wd)
+            wd = i[1][1]  # 取出被匹配到的关键词
+            region_wds.append(wd) 
+        # 停用词创建逻辑： 例如，如果region_wds中包含了"白血病"和"白血"，那么"白血"就会被添加到stop_wds中
         stop_wds = []
         for wd1 in region_wds:
             for wd2 in region_wds:
                 if wd1 in wd2 and wd1 != wd2:
                     stop_wds.append(wd1)
+        # 将匹配到的关键词过滤掉停用词
         final_wds = [i for i in region_wds if i not in stop_wds]
+        #根据最终的关键词列表，从类型字典中取出每个关键词的类型，构建一个字典，字典的键是关键词，值是关键词的类型
         final_dict = {i:self.wdtype_dict.get(i) for i in final_wds}
 
         return final_dict
